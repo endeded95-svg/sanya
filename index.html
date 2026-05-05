@@ -171,21 +171,17 @@
       padding: 12px 15px;
       border-radius: 22px;
       border: 1px solid rgba(17, 24, 39, 0.08);
-      background: rgba(255, 255, 255, 0.68);
-      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.09);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
       font-size: 14px;
       font-weight: 760;
       letter-spacing: -0.02em;
       line-height: 1.1;
       color: rgba(17, 24, 39, 0.82);
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.65);
-      animation:
-        bubbleFly var(--duration) cubic-bezier(.16, .84, .28, 1) infinite,
-        bubbleGlow 3.6s ease-in-out infinite;
-      animation-delay: var(--delay), calc(var(--delay) + 400ms);
+      will-change: transform, opacity;
+      transform: translate3d(-50%, -50%, 0) scale(0.75);
+      animation: bubbleFly var(--duration) cubic-bezier(.16, .84, .28, 1) forwards;
     }
 
     .bubble::before {
@@ -193,7 +189,7 @@
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: linear-gradient(135deg, rgba(96, 165, 250, 0.16), rgba(255,255,255,0.08), rgba(244, 114, 182, 0.14));
+      background: linear-gradient(135deg, rgba(96, 165, 250, 0.14), rgba(255,255,255,0.12), rgba(244, 114, 182, 0.12));
       pointer-events: none;
     }
 
@@ -334,30 +330,23 @@
     @keyframes bubbleFly {
       0% {
         opacity: 0;
-        transform: translate(-50%, -50%) translate(0, 0) scale(0.62) rotate(0deg);
-        filter: blur(8px);
+        transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0) scale(0.76) rotate(0deg);
       }
-      10% {
+      12% {
         opacity: 1;
-        filter: blur(0px);
       }
-      52% {
+      74% {
         opacity: 1;
-        transform: translate(-50%, -50%) translate(calc(var(--x) * 0.55), calc(var(--y) * 0.55)) scale(0.96) rotate(calc(var(--r) * 0.6));
-      }
-      78% {
-        opacity: 0.92;
       }
       100% {
         opacity: 0;
-        transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1.02) rotate(var(--r));
-        filter: blur(2px);
+        transform: translate3d(-50%, -50%, 0) translate3d(var(--x), var(--y), 0) scale(1) rotate(var(--r));
       }
     }
 
     @keyframes bubbleGlow {
-      0%, 100% { box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08); }
-      50% { box-shadow: 0 22px 60px rgba(59, 130, 246, 0.16), 0 12px 40px rgba(236, 72, 153, 0.10); }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.92; }
     }
 
     @keyframes dogEnter {
@@ -458,7 +447,7 @@
     </section>
 
     <button class="sound-button" id="soundButton" type="button">Включить звук</button>
-    <audio id="bubbleSound" src="birthday-sound.mp3" preload="auto"></audio>
+    <audio id="bubbleSound" src="https://raw.githubusercontent.com/endeded95-svg/sanya/main/1_sound.wav" preload="auto"></audio>
   </main>
 
   <script>
@@ -514,7 +503,7 @@
     const stage = document.querySelector(".stage");
     const soundButton = document.getElementById("soundButton");
     const bubbleSound = document.getElementById("bubbleSound");
-    let soundEnabled = false;
+    let soundEnabled = true;
 
     function randomBetween(min, max) {
       return Math.random() * (max - min) + min;
@@ -529,69 +518,69 @@
       return indexes;
     }
 
-    function createBubbles() {
-      const order = shuffledIndexes(messages.length);
+    function spawnBubble(message, index) {
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerHTML = `<span>${message}</span>`;
 
-      messages.forEach((message, index) => {
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
-        bubble.innerHTML = `<span>${message}</span>`;
+      const stageWidth = stage.offsetWidth;
+      const stageHeight = stage.offsetHeight;
+      const centerX = stageWidth / 2;
+      const centerY = stageHeight / 2;
 
-        const stageWidth = stage.offsetWidth;
-        const stageHeight = stage.offsetHeight;
-        const centerX = stageWidth / 2;
-        const centerY = stageHeight / 2;
+      const startX = centerX + randomBetween(-70, 70);
+      const startY = centerY + randomBetween(-60, 60);
+      const side = Math.floor(Math.random() * 4);
+      let endX;
+      let endY;
 
-        const startX = centerX + randomBetween(-90, 90);
-        const startY = centerY + randomBetween(-80, 80);
+      if (side === 0) {
+        endX = randomBetween(-260, stageWidth + 260);
+        endY = randomBetween(-210, -80);
+      } else if (side === 1) {
+        endX = randomBetween(stageWidth + 70, stageWidth + 280);
+        endY = randomBetween(-90, stageHeight + 90);
+      } else if (side === 2) {
+        endX = randomBetween(-260, stageWidth + 260);
+        endY = randomBetween(stageHeight + 70, stageHeight + 230);
+      } else {
+        endX = randomBetween(-280, -70);
+        endY = randomBetween(-90, stageHeight + 90);
+      }
 
-        const side = index % 4;
-        let endX;
-        let endY;
+      bubble.style.setProperty("--start-x", `${startX}px`);
+      bubble.style.setProperty("--start-y", `${startY}px`);
+      bubble.style.setProperty("--x", `${endX - startX}px`);
+      bubble.style.setProperty("--y", `${endY - startY}px`);
+      bubble.style.setProperty("--r", `${randomBetween(-14, 14).toFixed(2)}deg`);
+      bubble.style.setProperty("--duration", `${randomBetween(5.8, 8.2).toFixed(2)}s`);
 
-        if (side === 0) {
-          endX = randomBetween(-360, stageWidth + 360);
-          endY = randomBetween(-260, -90);
-        } else if (side === 1) {
-          endX = randomBetween(stageWidth + 90, stageWidth + 390);
-          endY = randomBetween(-120, stageHeight + 120);
-        } else if (side === 2) {
-          endX = randomBetween(-360, stageWidth + 360);
-          endY = randomBetween(stageHeight + 90, stageHeight + 300);
-        } else {
-          endX = randomBetween(-390, -90);
-          endY = randomBetween(-120, stageHeight + 120);
-        }
+      if (soundEnabled) {
+        const audio = bubbleSound.cloneNode();
+        audio.volume = 0.16;
+        audio.play().catch(() => {});
+      }
 
-        const x = endX - startX;
-        const y = endY - startY;
-        const rotate = `${randomBetween(-18, 18).toFixed(2)}deg`;
-        const delay = 400 + order[index] * randomBetween(120, 210);
-        const duration = `${randomBetween(7.2, 11.5).toFixed(2)}s`;
-
-        bubble.style.setProperty("--start-x", `${startX}px`);
-        bubble.style.setProperty("--start-y", `${startY}px`);
-        bubble.style.setProperty("--x", `${x}px`);
-        bubble.style.setProperty("--y", `${y}px`);
-        bubble.style.setProperty("--r", rotate);
-        bubble.style.setProperty("--delay", `${delay}ms`);
-        bubble.style.setProperty("--duration", duration);
-
-        bubble.addEventListener("animationstart", () => {
-          if (!soundEnabled) return;
-          const audio = bubbleSound.cloneNode();
-          audio.volume = 0.22;
-          audio.play().catch(() => {});
-        });
-
-        layer.appendChild(bubble);
-      });
+      layer.appendChild(bubble);
+      bubble.addEventListener("animationend", () => bubble.remove(), { once: true });
     }
 
-    soundButton.addEventListener("click", () => {
-      soundEnabled = true;
-      bubbleSound.volume = 0.22;
-      bubbleSound.play().catch(() => {});
+    function createBubbles() {
+      let index = 0;
+      const order = shuffledIndexes(messages.length);
+
+      function tick() {
+        const messageIndex = order[index % order.length];
+        spawnBubble(messages[messageIndex], index);
+        index += 1;
+      }
+
+      tick();
+      tick();
+      setInterval(tick, 360);
+    }
+
+    soundButton.style.display = "none";
       soundButton.textContent = "Звук включён";
       soundButton.style.opacity = "0.65";
     });
