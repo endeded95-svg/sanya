@@ -121,14 +121,14 @@
     .bubble-layer {
       position: absolute;
       inset: 0;
-      z-index: 7;
+      z-index: 30;
       overflow: visible;
       pointer-events: none;
     }
 
     .character-card {
       position: relative;
-      z-index: 10;
+      z-index: 5;
       width: min(62vw, 252px);
       aspect-ratio: 3 / 5;
       overflow: hidden;
@@ -157,6 +157,7 @@
     }
 
     .bubble {
+      z-index: 40;
       position: absolute;
       left: var(--start-x);
       top: var(--start-y);
@@ -457,7 +458,7 @@
     const layer = document.getElementById("bubbleLayer");
     const stage = document.querySelector(".stage");
     const characterVideo = document.querySelector(".character-card video");
-    const soundUrl = "https://raw.githubusercontent.com/endeded95-svg/sanya/main/1_sound.wav";
+    // sound removed
 
     let audioUnlocked = true;
     let messageIndex = 0;
@@ -478,23 +479,13 @@
     }
 
     function playBubbleSound() {
-      if (!audioUnlocked) return;
-      const audio = new Audio(soundUrl);
-      audio.volume = 0.16;
-      audio.play().catch(() => {
-        audioUnlocked = false;
-      });
+      // disabled
+    });
     }
 
     function unlockAudio() {
-      const audio = new Audio(soundUrl);
-      audio.volume = 0.01;
-      audio.play()
-        .then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          audioUnlocked = true;
-        })
+      // disabled
+    })
         .catch(() => {
           audioUnlocked = false;
         });
@@ -585,7 +576,7 @@
       bubbleTimer = window.setInterval(tick, 540);
     }
 
-    document.addEventListener("pointerdown", unlockAudio, { once: true });
+    
 
     window.addEventListener("load", () => {
       if (characterVideo) {
