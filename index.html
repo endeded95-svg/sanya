@@ -160,14 +160,14 @@
       position: absolute;
       left: var(--start-x);
       top: var(--start-y);
-      z-index: 8;
+      z-index: 18;
       max-width: 138px;
       padding: 9px 11px;
       border-radius: 18px;
       border: 1px solid rgba(17, 24, 39, 0.08);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.09);
-      color: rgba(17, 24, 39, 0.82);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.11);
+      color: rgba(17, 24, 39, 0.84);
       font-size: 12px;
       font-weight: 760;
       line-height: 1.08;
@@ -506,39 +506,55 @@
       bubble.innerHTML = `<span>${message}</span>`;
 
       const rect = stage.getBoundingClientRect();
+      const card = document.querySelector(".character-card");
+      const cardRect = card.getBoundingClientRect();
+
       const stageWidth = rect.width;
       const stageHeight = rect.height;
       const centerX = stageWidth / 2;
       const centerY = stageHeight / 2;
 
-      const startX = centerX + randomBetween(-28, 28);
-      const startY = centerY + randomBetween(-24, 24);
+      const avatarLeft = cardRect.left - rect.left;
+      const avatarRight = cardRect.right - rect.left;
+      const avatarTop = cardRect.top - rect.top;
+      const avatarBottom = cardRect.bottom - rect.top;
 
-      const safeX = 76;
-      const safeTop = 58;
-      const safeBottom = 118;
+      const zones = [
+        {
+          startX: randomBetween(centerX - 60, centerX + 60),
+          startY: avatarTop - 20,
+          targetX: randomBetween(76, stageWidth - 76),
+          targetY: randomBetween(42, Math.max(80, avatarTop - 42)),
+        },
+        {
+          startX: avatarLeft - 12,
+          startY: randomBetween(avatarTop + 50, avatarBottom - 70),
+          targetX: randomBetween(62, Math.max(86, avatarLeft - 42)),
+          targetY: randomBetween(96, stageHeight - 148),
+        },
+        {
+          startX: avatarRight + 12,
+          startY: randomBetween(avatarTop + 50, avatarBottom - 70),
+          targetX: randomBetween(Math.min(stageWidth - 86, avatarRight + 42), stageWidth - 62),
+          targetY: randomBetween(96, stageHeight - 148),
+        },
+        {
+          startX: randomBetween(centerX - 80, centerX + 80),
+          startY: avatarBottom + 14,
+          targetX: randomBetween(80, stageWidth - 80),
+          targetY: randomBetween(Math.min(stageHeight - 150, avatarBottom + 46), stageHeight - 112),
+        }
+      ];
 
-      let targetX;
-      let targetY;
-      let attempts = 0;
+      const zone = zones[Math.floor(Math.random() * zones.length)];
 
-      do {
-        targetX = randomBetween(safeX, stageWidth - safeX);
-        targetY = randomBetween(safeTop, stageHeight - safeBottom);
-        attempts += 1;
-      } while (
-        attempts < 24 &&
-        Math.abs(targetX - centerX) < 122 &&
-        Math.abs(targetY - centerY) < 122
-      );
-
-      bubble.style.setProperty("--start-x", `${startX}px`);
-      bubble.style.setProperty("--start-y", `${startY}px`);
-      bubble.style.setProperty("--x", `${targetX - startX}px`);
-      bubble.style.setProperty("--y", `${targetY - startY}px`);
-      bubble.style.setProperty("--drift-x", `${randomBetween(-14, 14).toFixed(1)}px`);
-      bubble.style.setProperty("--drift-y", `${randomBetween(-10, 10).toFixed(1)}px`);
-      bubble.style.setProperty("--r", `${randomBetween(-7, 7).toFixed(2)}deg`);
+      bubble.style.setProperty("--start-x", `${zone.startX}px`);
+      bubble.style.setProperty("--start-y", `${zone.startY}px`);
+      bubble.style.setProperty("--x", `${zone.targetX - zone.startX}px`);
+      bubble.style.setProperty("--y", `${zone.targetY - zone.startY}px`);
+      bubble.style.setProperty("--drift-x", `${randomBetween(-12, 12).toFixed(1)}px`);
+      bubble.style.setProperty("--drift-y", `${randomBetween(-8, 8).toFixed(1)}px`);
+      bubble.style.setProperty("--r", `${randomBetween(-6, 6).toFixed(2)}deg`);
       bubble.style.setProperty("--duration", `${randomBetween(7.4, 9.2).toFixed(2)}s`);
 
       layer.appendChild(bubble);
