@@ -181,7 +181,7 @@
       opacity: 0;
       will-change: transform, opacity;
       transform: translate3d(-50%, -50%, 0) scale(0.75);
-      animation: bubbleFly var(--duration) cubic-bezier(.16, .84, .28, 1) forwards;
+      animation: bubbleFloat var(--duration) cubic-bezier(.16, .84, .28, 1) forwards;
     }
 
     .bubble::before {
@@ -327,20 +327,22 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    @keyframes bubbleFly {
+    @keyframes bubbleFloat {
       0% {
         opacity: 0;
-        transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0) scale(0.76) rotate(0deg);
+        transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0) scale(0.72) rotate(0deg);
       }
-      12% {
+      18% {
         opacity: 1;
+        transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--x) * 0.82), calc(var(--y) * 0.82), 0) scale(1) rotate(calc(var(--r) * 0.7));
       }
-      74% {
+      78% {
         opacity: 1;
+        transform: translate3d(-50%, -50%, 0) translate3d(var(--x), var(--y), 0) scale(1) rotate(var(--r));
       }
       100% {
         opacity: 0;
-        transform: translate3d(-50%, -50%, 0) translate3d(var(--x), var(--y), 0) scale(1) rotate(var(--r));
+        transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--x) + var(--drift-x)), calc(var(--y) + var(--drift-y)), 0) scale(0.98) rotate(var(--r));
       }
     }
 
@@ -446,7 +448,7 @@
       <p class="caption">Пусть этот день будет особенным</p>
     </section>
 
-    <button class="sound-button" id="soundButton" type="button">Включить звук</button>
+    <button class="sound-button" id="soundButton" type="button">Нажми для звука</button>
     <audio id="bubbleSound" src="https://raw.githubusercontent.com/endeded95-svg/sanya/main/1_sound.wav" preload="auto"></audio>
   </main>
 
@@ -502,23 +504,56 @@
     const layer = document.getElementById("bubbleLayer");
     const stage = document.querySelector(".stage");
     const soundButton = document.getElementById("soundButton");
-    const bubbleSound = document.getElementById("bubbleSound");
-    let soundEnabled = true;
+    const soundUrl = "https://raw.githubusercontent.com/endeded95-svg/sanya/main/1_sound.wav";
+
+    let audioUnlocked = false;
+    let messageIndex = 0;
+    let currentOrder = shuffle(messages.length);
+    let bubbleTimer = null;
 
     function randomBetween(min, max) {
       return Math.random() * (max - min) + min;
     }
 
-    function shuffledIndexes(length) {
-      const indexes = Array.from({ length }, (_, index) => index);
-      for (let i = indexes.length - 1; i > 0; i--) {
+    function shuffle(length) {
+      const arr = Array.from({ length }, (_, index) => index);
+      for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+        [arr[i], arr[j]] = [arr[j], arr[i]];
       }
-      return indexes;
+      return arr;
     }
 
-    function spawnBubble(message, index) {
+    function playBubbleSound() {
+      if (!audioUnlocked) return;
+
+      const audio = new Audio(soundUrl);
+      audio.volume = 0.18;
+      audio.play().catch(() => {});
+    }
+
+    function unlockAudio() {
+      const audio = new Audio(soundUrl);
+      audio.volume = 0.01;
+
+      audio.play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audioUnlocked = true;
+          soundButton.textContent = "Звук включён";
+          soundButton.style.opacity = "0.55";
+          window.setTimeout(() => {
+            soundButton.style.display = "none";
+          }, 700);
+        })
+        .catch(() => {
+          audioUnlocked = true;
+          soundButton.style.display = "none";
+        });
+    }
+
+    function spawnBubble(message) {
       const bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.innerHTML = `<span>${message}</span>`;
@@ -528,64 +563,70 @@
       const centerX = stageWidth / 2;
       const centerY = stageHeight / 2;
 
-      const startX = centerX + randomBetween(-70, 70);
-      const startY = centerY + randomBetween(-60, 60);
-      const side = Math.floor(Math.random() * 4);
-      let endX;
-      let endY;
+      const startX = centerX + randomBetween(-38, 38);
+      const startY = centerY + randomBetween(-34, 34);
 
-      if (side === 0) {
-        endX = randomBetween(-260, stageWidth + 260);
-        endY = randomBetween(-210, -80);
-      } else if (side === 1) {
-        endX = randomBetween(stageWidth + 70, stageWidth + 280);
-        endY = randomBetween(-90, stageHeight + 90);
-      } else if (side === 2) {
-        endX = randomBetween(-260, stageWidth + 260);
-        endY = randomBetween(stageHeight + 70, stageHeight + 230);
-      } else {
-        endX = randomBetween(-280, -70);
-        endY = randomBetween(-90, stageHeight + 90);
-      }
+      const safePaddingX = window.innerWidth < 760 ? 92 : 135;
+      const safePaddingY = window.innerWidth < 760 ? 94 : 120;
+      const safeMinX = safePaddingX;
+      const safeMaxX = stageWidth - safePaddingX;
+      const safeMinY = safePaddingY;
+      const safeMaxY = stageHeight - safePaddingY;
+
+      let targetX;
+      let targetY;
+      let attempts = 0;
+
+      do {
+        targetX = randomBetween(safeMinX, safeMaxX);
+        targetY = randomBetween(safeMinY, safeMaxY);
+        attempts += 1;
+      } while (
+        attempts < 20 &&
+        Math.abs(targetX - centerX) < 140 &&
+        Math.abs(targetY - centerY) < 135
+      );
 
       bubble.style.setProperty("--start-x", `${startX}px`);
       bubble.style.setProperty("--start-y", `${startY}px`);
-      bubble.style.setProperty("--x", `${endX - startX}px`);
-      bubble.style.setProperty("--y", `${endY - startY}px`);
-      bubble.style.setProperty("--r", `${randomBetween(-14, 14).toFixed(2)}deg`);
-      bubble.style.setProperty("--duration", `${randomBetween(5.8, 8.2).toFixed(2)}s`);
-
-      if (soundEnabled) {
-        const audio = bubbleSound.cloneNode();
-        audio.volume = 0.16;
-        audio.play().catch(() => {});
-      }
+      bubble.style.setProperty("--x", `${targetX - startX}px`);
+      bubble.style.setProperty("--y", `${targetY - startY}px`);
+      bubble.style.setProperty("--drift-x", `${randomBetween(-24, 24).toFixed(1)}px`);
+      bubble.style.setProperty("--drift-y", `${randomBetween(-18, 18).toFixed(1)}px`);
+      bubble.style.setProperty("--r", `${randomBetween(-8, 8).toFixed(2)}deg`);
+      bubble.style.setProperty("--duration", `${randomBetween(7.8, 10.5).toFixed(2)}s`);
 
       layer.appendChild(bubble);
-      bubble.addEventListener("animationend", () => bubble.remove(), { once: true });
+      playBubbleSound();
+
+      bubble.addEventListener("animationend", () => {
+        bubble.remove();
+      }, { once: true });
     }
 
-    function createBubbles() {
-      let index = 0;
-      const order = shuffledIndexes(messages.length);
-
-      function tick() {
-        const messageIndex = order[index % order.length];
-        spawnBubble(messages[messageIndex], index);
-        index += 1;
+    function tick() {
+      if (messageIndex >= messages.length) {
+        if (bubbleTimer) {
+          window.clearInterval(bubbleTimer);
+          bubbleTimer = null;
+        }
+        return;
       }
 
-      tick();
-      tick();
-      setInterval(tick, 360);
+      const index = currentOrder[messageIndex];
+      spawnBubble(messages[index]);
+      messageIndex += 1;
     }
 
-    soundButton.style.display = "none";
-      soundButton.textContent = "Звук включён";
-      soundButton.style.opacity = "0.65";
-    });
+    function startMessages() {
+      tick();
+      bubbleTimer = window.setInterval(tick, 520);
+    }
 
-    createBubbles();
+    soundButton.addEventListener("click", unlockAudio);
+    document.addEventListener("pointerdown", unlockAudio, { once: true });
+
+    startMessages();
   </script>
 </body>
 </html>
